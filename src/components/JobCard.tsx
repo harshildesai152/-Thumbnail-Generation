@@ -71,7 +71,7 @@ export function JobCard({ job, onRetry, onDelete }: JobCardProps) {
                 <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
                   <span className="font-mono">{formatFileSize(job.fileSize)}</span>
                   <span>•</span>
-                  <span>{formatTimeAgo(job.createdAt)}</span>
+                  <span suppressHydrationWarning>{formatTimeAgo(job.createdAt)}</span>
                 </div>
               </div>
               <StatusBadge status={job.status} />
