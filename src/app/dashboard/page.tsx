@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 import { useAtom } from 'jotai';
 import { ListFilter, Clock, Loader2, CheckCircle2, XCircle, LayoutGrid } from 'lucide-react';
 import { Header } from '@/components/Header';
@@ -8,30 +8,30 @@ import { UploadZone } from '@/components/UploadZone';
 import { JobCard } from '@/components/JobCard';
 import { StatsCard } from '@/components/StatsCard';
 import { FilterTabs } from '@/components/FilterTabs';
-import { jobsAtom, jobStatsAtom } from '@/store/jobsStore';
+import { jobStatsAtom } from '@/store/jobsStore';
 import type { JobStatus } from '@/types';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Cookies from 'js-cookie';
+import { useJobs } from '@/lib/useJobs';
 
 export default function Dashboard() {
-  const [jobs, setJobs] = useAtom(jobsAtom);
+  const router = useRouter();
+  const { jobs, retryJob, deleteJob } = useJobs();
   const [stats] = useAtom(jobStatsAtom);
   const [activeFilter, setActiveFilter] = useState<'all' | JobStatus>('all');
+
+  useEffect(() => {
+    const token = Cookies.get('token');
+    if (!token) {
+      router.push('/login');
+    }
+  }, [router]);
 
   const filteredJobs = useMemo(() => {
     if (activeFilter === 'all') return jobs;
     return jobs.filter(job => job.status === activeFilter);
   }, [jobs, activeFilter]);
-
-  const handleRetry = useCallback((id: string) => {
-    setJobs(prev => prev.map(job => 
-      job.id === id 
-        ? { ...job, status: 'queued' as JobStatus, errorMessage: undefined, updatedAt: new Date() }
-        : job
-    ));
-  }, [setJobs]);
-
-  const handleDelete = useCallback((id: string) => {
-    setJobs(prev => prev.filter(job => job.id !== id));
-  }, [setJobs]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -122,8 +122,8 @@ export default function Dashboard() {
                   <JobCard
                     key={job.id}
                     job={job}
-                    onRetry={handleRetry}
-                    onDelete={handleDelete}
+                    onRetry={retryJob}
+                    onDelete={deleteJob}
                   />
                 ))
               )}
