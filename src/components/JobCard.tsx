@@ -4,6 +4,11 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/StatusBadge';
 import type { ThumbnailJob } from '@/types';
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface JobCardProps {
   job: ThumbnailJob;
@@ -104,10 +109,58 @@ export function JobCard({ job, onRetry, onDelete }: JobCardProps) {
             <div className="flex items-center gap-2 mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
               {job.status === 'completed' && (
                 <>
-                  <Button variant="outline" size="sm" className="h-8 text-xs bg-background/50 backdrop-blur-sm">
-                    <Eye className="w-3.5 h-3.5 mr-2" />
-                    View
-                  </Button>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm" className="h-8 text-xs bg-background/50 backdrop-blur-sm">
+                        <Eye className="w-3.5 h-3.5 mr-2" />
+                        View
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-4xl bg-card/95 backdrop-blur-xl border-border/50 p-0 overflow-hidden gap-0">
+                      {/* Header */}
+                      <div className="flex items-center justify-between p-4 border-b border-border/50">
+                        <div className="flex items-center gap-2">
+                          <FileIcon className="w-4 h-4 text-primary" />
+                          <span className="font-medium text-sm">{job.fileName}</span>
+                        </div>
+                        {/* Close button is automatically added by DialogContent */}
+                      </div>
+
+                      {/* Image Viewer */}
+                      <div className="relative aspect-video w-full bg-black/5 flex items-center justify-center overflow-hidden">
+                         {/* Background Blur Effect */}
+                         {job.thumbnailUrl && (
+                          <div 
+                            className="absolute inset-0 opacity-20 blur-[100px] scale-110"
+                            style={{ backgroundImage: `url(${job.thumbnailUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+                          />
+                        )}
+                        
+                        {job.thumbnailUrl && (
+                          <img
+                            src={job.thumbnailUrl}
+                            alt={job.fileName}
+                            className="relative w-full h-full object-contain z-10"
+                          />
+                        )}
+                      </div>
+
+                      {/* Footer */}
+                      <div className="flex items-center justify-between p-4 bg-muted/30 border-t border-border/50">
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                          <span className="font-mono">{formatFileSize(job.fileSize)}</span>
+                          <span>•</span>
+                          <span className="capitalize">{job.fileType}</span>
+                          <span>•</span>
+                          <StatusBadge status={job.status} />
+                        </div>
+                        <Button size="sm" className="gap-2">
+                          <Download className="w-4 h-4" />
+                          Download
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                   <Button variant="outline" size="sm" className="h-8 text-xs bg-background/50 backdrop-blur-sm">
                     <Download className="w-3.5 h-3.5 mr-2" />
                     Download
