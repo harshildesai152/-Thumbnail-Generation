@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { Layers, User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -7,8 +6,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { api } from '@/lib/api';
+import { useRouter } from 'next/navigation';
 
 export function Header() {
+  const router = useRouter();
+
+  const handleLogout = () => {
+    api.auth.logout();
+    router.push('/login');
+  };
+
   return (
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
       <div className="container h-16 flex items-center justify-between">
@@ -29,11 +37,9 @@ export function Header() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
-                <Link href="/login" className="flex items-center cursor-pointer text-red-500 focus:text-red-500">
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Log out
-                </Link>
+              <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-500 focus:text-red-500">
+                <LogOut className="w-4 h-4 mr-2" />
+                Log out
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

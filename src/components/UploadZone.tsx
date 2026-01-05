@@ -5,13 +5,16 @@ import { useAtom } from 'jotai';
 import { Upload, Image, Video, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { jobsAtom, uploadingFilesAtom } from '@/store/jobsStore';
-import type { ThumbnailJob, UploadFile } from '@/types';
+import { uploadingFilesAtom } from '@/store/jobsStore';
+import type { UploadFile } from '@/types';
+import { api } from '@/lib/api';
+import { useJobs } from '@/lib/useJobs';
+import { toast } from 'sonner';
 
 export function UploadZone() {
   const [isDragging, setIsDragging] = useState(false);
-  const [jobs, setJobs] = useAtom(jobsAtom);
   const [uploadingFiles, setUploadingFiles] = useAtom(uploadingFilesAtom);
+  const { addJobs } = useJobs();
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -23,12 +26,17 @@ export function UploadZone() {
     setIsDragging(false);
   }, []);
 
-  const processFiles = useCallback((files: FileList) => {
-    const validFiles = Array.from(files).filter(file => 
+  const processFiles = useCallback(async (files: FileList) => {
+    const validFiles = Array.from(files).filter(file =>
       file.type.startsWith('image/') || file.type.startsWith('video/')
     );
 
-    // Create upload file entries
+    if (validFiles.length === 0) {
+      toast.error('No valid files selected. Please select images or videos.');
+      return;
+    }
+
+    // Create upload file entries for progress tracking
     const newUploads: UploadFile[] = validFiles.map(file => ({
       id: crypto.randomUUID(),
       file,
@@ -38,39 +46,49 @@ export function UploadZone() {
 
     setUploadingFiles(prev => [...prev, ...newUploads]);
 
-    // Simulate upload and job creation
-    newUploads.forEach((upload, index) => {
-      const interval = setInterval(() => {
-        setUploadingFiles(prev => 
-          prev.map(f => 
-            f.id === upload.id 
-              ? { ...f, progress: Math.min(f.progress + 20, 100) }
-              : f
-          )
-        );
-      }, 200);
+    try {
+      // Update progress to show upload starting
+      setUploadingFiles(prev =>
+        prev.map(f => ({ ...f, progress: 10 }))
+      );
 
+      // Upload files via API
+      const response = await api.upload.uploadFiles(files);
+
+      // Update progress to complete
+      setUploadingFiles(prev =>
+        prev.map(f => ({ ...f, progress: 100, status: 'completed' }))
+      );
+
+      // Add jobs to the state
+      addJobs(response.jobs);
+
+      toast.success(`Successfully uploaded ${response.jobs.length} file(s)`);
+
+      // Remove from uploading list after a delay
       setTimeout(() => {
-        clearInterval(interval);
-        
-        // Remove from uploading
-        setUploadingFiles(prev => prev.filter(f => f.id !== upload.id));
+        setUploadingFiles(prev => prev.filter(f =>
+          !newUploads.some(upload => upload.id === f.id)
+        ));
+      }, 2000);
 
-        // Add as job
-        const newJob: ThumbnailJob = {
-          id: crypto.randomUUID(),
-          fileName: upload.file.name,
-          fileType: upload.file.type.startsWith('video/') ? 'video' : 'image',
-          fileSize: upload.file.size,
-          status: 'queued',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
+    } catch (error) {
+      console.error('Upload failed:', error);
+      toast.error('Upload failed. Please try again.');
 
-        setJobs(prev => [newJob, ...prev]);
-      }, 1500 + index * 300);
-    });
-  }, [setJobs, setUploadingFiles]);
+      // Mark uploads as failed
+      setUploadingFiles(prev =>
+        prev.map(f => ({ ...f, status: 'error' }))
+      );
+
+      // Remove failed uploads after delay
+      setTimeout(() => {
+        setUploadingFiles(prev => prev.filter(f =>
+          !newUploads.some(upload => upload.id === f.id)
+        ));
+      }, 3000);
+    }
+  }, [setUploadingFiles, addJobs]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();

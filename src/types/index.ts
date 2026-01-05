@@ -13,6 +13,15 @@ export interface ThumbnailJob {
   updatedAt: Date;
 }
 
+export interface JobUpdate {
+  jobId: string;
+  status: JobStatus;
+  progress: number;
+  result?: any;
+  error?: string;
+  timestamp: string;
+}
+
 export interface UploadFile {
   id: string;
   file: File;

@@ -7,6 +7,10 @@ import { Layers, Mail, Lock, User, ArrowRight, Github, Check } from 'lucide-reac
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { api } from '@/lib/api';
+import { toast } from 'sonner';
+import Cookies from 'js-cookie';
+import { useEffect } from 'react';
 
 const features = [
   'Unlimited thumbnail generation',
@@ -17,6 +21,14 @@ const features = [
 
 export default function Signup() {
   const router = useRouter();
+  
+  useEffect(() => {
+    const token = Cookies.get('token');
+    if (token) {
+      router.push('/dashboard');
+    }
+  }, [router]);
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -26,10 +38,16 @@ export default function Signup() {
     e.preventDefault();
     setIsLoading(true);
     
-    // Simulate signup
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setIsLoading(false);
-    router.push('/dashboard');
+    try {
+      await api.auth.register({ name, email, password });
+      toast.success('Account created successfully! Please login.');
+      router.push('/login');
+    } catch (error) {
+      console.error(error);
+      toast.error((error as Error).message);
+    } finally {
+        setIsLoading(false);
+    }
   };
 
   return (
