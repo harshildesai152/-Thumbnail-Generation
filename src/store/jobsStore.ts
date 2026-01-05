@@ -9,7 +9,7 @@ const initialJobs: ThumbnailJob[] = [
     fileType: 'image',
     fileSize: 2500000,
     status: 'completed',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=128&h=128&fit=crop',
+    thumbnailUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1200&h=800&fit=crop',
     createdAt: new Date(Date.now() - 1000 * 60 * 30), // 30 mins ago
     updatedAt: new Date(Date.now() - 1000 * 60 * 29),
   },
