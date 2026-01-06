@@ -14,7 +14,7 @@ const database_1 = require("./config/database");
 const redis_1 = __importDefault(require("./config/redis"));
 const queue_1 = require("./config/queue");
 const socketService_1 = require("./services/socketService");
-const thumbnailWorker_1 = __importDefault(require("./workers/thumbnailWorker"));
+const thumbnailWorker_1 = require("./workers/thumbnailWorker");
 const auth_1 = __importDefault(require("./routes/auth"));
 const upload_1 = __importDefault(require("./routes/upload"));
 const jobs_1 = __importDefault(require("./routes/jobs"));
@@ -70,15 +70,18 @@ async function startServer() {
         app.use(errorHandler_1.errorHandler);
         // Create HTTP server
         const server = (0, http_1.createServer)(app);
-        // Initialize Socket.IO
+        // Initialize Socket.IO FIRST
         const socketService = new socketService_1.SocketService(server);
+        console.log('📡 Socket.IO service initialized');
+        // Initialize Worker AFTER SocketService is ready
+        const thumbnailWorker = (0, thumbnailWorker_1.initThumbnailWorker)();
         // Start server
         server.listen(PORT, () => {
             console.log(`🚀 Server running on port ${PORT}`);
-            console.log('📡 Socket.IO initialized');
+            console.log('📡 Socket.IO initialized and listening');
             console.log('📋 API endpoints available at: http://localhost:' + PORT + '/api');
             console.log('🏥 Health check: http://localhost:' + PORT + '/api/health');
-            if (thumbnailWorker_1.default) {
+            if (thumbnailWorker) {
                 console.log('👷 Thumbnail worker active');
             }
             else {

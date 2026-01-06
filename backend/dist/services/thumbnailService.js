@@ -7,9 +7,20 @@ exports.ThumbnailService = void 0;
 const sharp_1 = __importDefault(require("sharp"));
 const fluent_ffmpeg_1 = __importDefault(require("fluent-ffmpeg"));
 const path_1 = __importDefault(require("path"));
+// Configure FFmpeg binary paths (common Windows installation paths)
+try {
+    fluent_ffmpeg_1.default.setFfmpegPath('C:\\ffmpeg\\bin\\ffmpeg.exe');
+    fluent_ffmpeg_1.default.setFfprobePath('C:\\ffmpeg\\bin\\ffprobe.exe');
+}
+catch (error) {
+    // FFmpeg binaries not found, will use system PATH
+    console.warn('FFmpeg binaries not found at default path, using system PATH');
+}
 class ThumbnailService {
     static async generateImageThumbnail(inputPath, outputPath) {
-        await (0, sharp_1.default)(inputPath)
+        await (0, sharp_1.default)(inputPath, {
+            limitInputPixels: 1000000000 // Increase pixel limit from ~268M to 1B pixels
+        })
             .resize(128, 128, {
             fit: 'cover',
             position: 'center'

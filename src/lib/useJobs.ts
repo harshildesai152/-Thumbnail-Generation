@@ -15,7 +15,7 @@ export const useJobs = () => {
     const fetchUserProfile = async () => {
       try {
         const profile = await api.auth.getProfile();
-        setUserId(profile.user.userId);
+        setUserId(profile.user._id);
       } catch (error) {
         console.error('Failed to fetch user profile:', error);
       }
@@ -37,7 +37,7 @@ export const useJobs = () => {
         fileSize: 0, // You might want to add this to the backend response
         status: job.status,
         progress: job.progress || 0,
-        thumbnailUrl: job.thumbnailFileName ? `/api/files/thumbnail/${job.thumbnailFileName}` : undefined,
+        thumbnailUrl: job.thumbnailFileName ? `/api/files/thumbnails/${job.thumbnailFileName}` : undefined,
         errorMessage: job.errorMessage,
         createdAt: new Date(job.createdAt),
         updatedAt: new Date(job.updatedAt || job.createdAt),
@@ -65,7 +65,7 @@ export const useJobs = () => {
             errorMessage: update.error,
             updatedAt: new Date(),
             thumbnailUrl: update.result?.thumbnailFileName
-              ? `/api/files/thumbnail/${update.result.thumbnailFileName}`
+              ? `/api/files/thumbnails/${update.result.thumbnailFileName}`
               : updatedJobs[jobIndex].thumbnailUrl,
           };
         }

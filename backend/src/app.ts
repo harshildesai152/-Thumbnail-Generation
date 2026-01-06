@@ -1,57 +1,55 @@
-import { FastifyPluginAsync } from 'fastify';
-import cors from '@fastify/cors';
-import helmet from '@fastify/helmet';
-import rateLimit from '@fastify/rate-limit';
-import multipart from '@fastify/multipart';
-import staticPlugin from '@fastify/static';
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import morgan from 'morgan';
+import rateLimit from 'express-rate-limit';
 import path from 'path';
+import { errorHandler } from './middleware/errorHandler';
+import authRoutes from './routes/auth';
+import uploadRoutes from './routes/upload';
+import jobRoutes from './routes/jobs';
 import { StorageService } from './services/storageService';
-// Import routes - we'll need to refactor these first, but importing them here for structure
-// import authRoutes from './routes/auth';
-// import uploadRoutes from './routes/upload';
-// import jobRoutes from './routes/jobs';
 
-const app: FastifyPluginAsync = async (fastify, opts) => {
-  // Security headers
-  await fastify.register(helmet);
+const app = express();
 
-  // CORS
-  await fastify.register(cors, {
+// Security middleware
+app.use(helmet());
+app.use(cors({
     origin: process.env.FRONTEND_URL || "http://localhost:3000",
     credentials: true
-  });
+}));
 
   // Rate limiting
-  await fastify.register(rateLimit, {
-    max: 100,
-    timeWindow: '15 minutes'
-  });
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100 // limit each IP to 100 requests per windowMs
+});
+app.use(limiter);
 
-  // Body parsing and Multipart support
-  // Fastify matches application/json by default
-  await fastify.register(multipart);
+// Logging
+app.use(morgan('combined'));
+
+// Body parsing
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
   // Ensure upload directories exist
   StorageService.ensureDirectories();
 
-  // Static file serving
-  await fastify.register(staticPlugin, {
-    root: path.join(process.cwd(), 'uploads'),
-    prefix: '/api/files/',
-  });
+// Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/upload', uploadRoutes);
+app.use('/api/jobs', jobRoutes);
+
+// Static file serving for uploads
+app.use('/api/files', express.static(path.join(process.cwd(), 'uploads')));
 
   // Health check
-  fastify.get('/api/health', async (request, reply) => {
-    return { status: 'OK', timestamp: new Date().toISOString() };
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'OK', timestamp: new Date().toISOString() });
   });
 
-  // Register routes (We will need to convert these to Fastify plugins next)
-  // await fastify.register(authRoutes, { prefix: '/api/auth' });
-  // await fastify.register(uploadRoutes, { prefix: '/api/upload' });
-  // await fastify.register(jobRoutes, { prefix: '/api/jobs' });
-  
-  // Temporary placeholder until routes are converted
-  fastify.log.info('Routes registration commented out until conversion');
-};
+// Error handling
+app.use(errorHandler);
 
 export default app;

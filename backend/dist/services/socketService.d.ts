@@ -8,6 +8,7 @@ export declare class SocketService {
     private setupQueueListeners;
     private setupSocketHandlers;
     private getUserIdFromJobId;
+    private getBullMQJobData;
     emitJobUpdate(jobId: string, userId: string, status: string, progress: number, result?: any, error?: string): void;
     getIO(): SocketServer;
 }

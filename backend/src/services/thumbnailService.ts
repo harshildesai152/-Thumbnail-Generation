@@ -3,9 +3,20 @@ import ffmpeg from 'fluent-ffmpeg';
 import { promises as fs } from 'fs';
 import path from 'path';
 
+// Configure FFmpeg binary paths (common Windows installation paths)
+try {
+  ffmpeg.setFfmpegPath('C:\\ffmpeg\\bin\\ffmpeg.exe');
+  ffmpeg.setFfprobePath('C:\\ffmpeg\\bin\\ffprobe.exe');
+} catch (error) {
+  // FFmpeg binaries not found, will use system PATH
+  console.warn('FFmpeg binaries not found at default path, using system PATH');
+}
+
 export class ThumbnailService {
   static async generateImageThumbnail(inputPath: string, outputPath: string): Promise<void> {
-    await sharp(inputPath)
+    await sharp(inputPath, {
+      limitInputPixels: 1000000000  // Increase pixel limit from ~268M to 1B pixels
+    })
       .resize(128, 128, {
         fit: 'cover',
         position: 'center'
