@@ -16,7 +16,15 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-  const allowedTypes = process.env.ALLOWED_FILE_TYPES?.split(',') || [];
+  const allowedTypes = process.env.ALLOWED_FILE_TYPES?.split(',') || [
+    'image/jpeg',
+    'image/png',
+    'image/gif',
+    'image/webp',
+    'video/mp4',
+    'video/webm',
+    'video/quicktime'
+  ];
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {

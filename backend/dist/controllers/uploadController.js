@@ -19,7 +19,15 @@ const storage = multer_1.default.diskStorage({
     }
 });
 const fileFilter = (req, file, cb) => {
-    const allowedTypes = process.env.ALLOWED_FILE_TYPES?.split(',') || [];
+    const allowedTypes = process.env.ALLOWED_FILE_TYPES?.split(',') || [
+        'image/jpeg',
+        'image/png',
+        'image/gif',
+        'image/webp',
+        'video/mp4',
+        'video/webm',
+        'video/quicktime'
+    ];
     if (allowedTypes.includes(file.mimetype)) {
         cb(null, true);
     }
