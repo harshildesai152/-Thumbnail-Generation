@@ -6,5 +6,6 @@ const auth_1 = require("../middleware/auth");
 const router = (0, express_1.Router)();
 router.get('/', auth_1.authenticate, jobController_1.JobController.getUserJobs);
 router.get('/:jobId', auth_1.authenticate, jobController_1.JobController.getJobById);
+router.delete('/:jobId', auth_1.authenticate, jobController_1.JobController.deleteJob);
 exports.default = router;
 //# sourceMappingURL=jobs.js.map

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import path from 'path';
 import { Job } from '../models/Job';
+import { StorageService } from '../services/storageService';
 
 export class JobController {
   private static serializeJob(job: any, req: Request) {
@@ -65,6 +66,35 @@ export class JobController {
     } catch (error) {
       console.error('Get job error:', error);
       res.status(500).json({ error: 'Failed to fetch job' });
+    }
+  }
+
+  static async deleteJob(req: Request, res: Response): Promise<void> {
+    try {
+      const { jobId } = req.params;
+      const userId = req.user!.userId;
+
+      const job = await Job.findOne({ _id: jobId, userId });
+      if (!job) {
+        res.status(404).json({ error: 'Job not found' });
+        return;
+      }
+
+      // Delete files
+      if (job.originalFilePath) {
+        await StorageService.deleteFile(job.originalFilePath);
+      }
+      if (job.thumbnailFilePath) {
+        await StorageService.deleteFile(job.thumbnailFilePath);
+      }
+
+      // Delete database record
+      await Job.deleteOne({ _id: jobId });
+
+      res.json({ message: 'Job deleted successfully' });
+    } catch (error) {
+       console.error('Delete job error:', error);
+       res.status(500).json({ error: 'Failed to delete job' });
     }
   }
 }

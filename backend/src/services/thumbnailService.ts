@@ -3,13 +3,20 @@ import ffmpeg from 'fluent-ffmpeg';
 import { promises as fs } from 'fs';
 import path from 'path';
 
-// Configure FFmpeg binary paths (common Windows installation paths)
-try {
-  ffmpeg.setFfmpegPath('C:\\ffmpeg\\bin\\ffmpeg.exe');
-  ffmpeg.setFfprobePath('C:\\ffmpeg\\bin\\ffprobe.exe');
-} catch (error) {
-  // FFmpeg binaries not found, will use system PATH
-  console.warn('FFmpeg binaries not found at default path, using system PATH');
+const ffmpegPath = require('ffmpeg-static');
+const { path: ffprobePath } = require('ffprobe-static');
+
+// Configure FFmpeg binary paths
+if (ffmpegPath) {
+  ffmpeg.setFfmpegPath(ffmpegPath);
+} else {
+  console.warn('FFmpeg static binary not found, using system PATH');
+}
+
+if (ffprobePath) {
+  ffmpeg.setFfprobePath(ffprobePath);
+} else {
+  console.warn('FFprobe static binary not found, using system PATH');
 }
 
 export class ThumbnailService {
@@ -40,7 +47,7 @@ export class ThumbnailService {
         ffmpeg(inputPath)
           .screenshots({
             timestamps: [seekTime],
-            filename: path.basename(outputPath, path.extname(outputPath)),
+            filename: path.basename(outputPath),
             folder: path.dirname(outputPath),
             size: '128x128'
           })

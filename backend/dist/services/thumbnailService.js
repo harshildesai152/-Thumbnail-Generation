@@ -7,14 +7,20 @@ exports.ThumbnailService = void 0;
 const sharp_1 = __importDefault(require("sharp"));
 const fluent_ffmpeg_1 = __importDefault(require("fluent-ffmpeg"));
 const path_1 = __importDefault(require("path"));
-// Configure FFmpeg binary paths (common Windows installation paths)
-try {
-    fluent_ffmpeg_1.default.setFfmpegPath('C:\\ffmpeg\\bin\\ffmpeg.exe');
-    fluent_ffmpeg_1.default.setFfprobePath('C:\\ffmpeg\\bin\\ffprobe.exe');
+const ffmpegPath = require('ffmpeg-static');
+const { path: ffprobePath } = require('ffprobe-static');
+// Configure FFmpeg binary paths
+if (ffmpegPath) {
+    fluent_ffmpeg_1.default.setFfmpegPath(ffmpegPath);
 }
-catch (error) {
-    // FFmpeg binaries not found, will use system PATH
-    console.warn('FFmpeg binaries not found at default path, using system PATH');
+else {
+    console.warn('FFmpeg static binary not found, using system PATH');
+}
+if (ffprobePath) {
+    fluent_ffmpeg_1.default.setFfprobePath(ffprobePath);
+}
+else {
+    console.warn('FFprobe static binary not found, using system PATH');
 }
 class ThumbnailService {
     static async generateImageThumbnail(inputPath, outputPath) {
@@ -41,7 +47,7 @@ class ThumbnailService {
                 (0, fluent_ffmpeg_1.default)(inputPath)
                     .screenshots({
                     timestamps: [seekTime],
-                    filename: path_1.default.basename(outputPath, path_1.default.extname(outputPath)),
+                    filename: path_1.default.basename(outputPath),
                     folder: path_1.default.dirname(outputPath),
                     size: '128x128'
                 })
