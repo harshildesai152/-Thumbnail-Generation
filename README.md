@@ -26,6 +26,10 @@ The backend runs in a Docker container along with MongoDB and Redis.
     cd backend
     ```
 
+    ```bash
+    npm run dev
+    ```
+
 2.  **Create an `.env` file** (Optional for Docker, but good practice):
     The `docker-compose.yml` comes pre-configured with development values. If you want to customize them, create a `.env` file in the `backend` directory:
 
