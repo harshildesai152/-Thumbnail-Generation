@@ -114,9 +114,17 @@ export const useJobs = () => {
 
   // Delete a job
   const deleteJob = useCallback(async (jobId: string) => {
+    // Optimistic update
     setJobs(prev => prev.filter(job => job.id !== jobId));
-    // TODO: Implement delete API call if needed
-  }, [setJobs]);
+    
+    try {
+      await api.jobs.deleteJob(jobId);
+    } catch (error) {
+       console.error('Failed to delete job:', error);
+       // Revert on error (fetch jobs again)
+       fetchJobs();
+    }
+  }, [setJobs, fetchJobs]);
 
   return {
     jobs,

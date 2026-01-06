@@ -96,6 +96,23 @@ export const api = {
       }
 
       return result;
+    },
+
+    deleteJob: async (jobId: string) => {
+      const token = Cookies.get('token');
+      const response = await fetch(`${API_BASE_URL}/jobs/${jobId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const result = await response.json();
+        throw new Error(result.error || 'Failed to delete job');
+      }
+
+      return await response.json();
     }
   },
 
