@@ -1,0 +1,12 @@
+node_modules
+dist
+logs
+uploads
+.env
+.git
+.gitignore
+README.md
+task.md
+implementation_plan.md
+setup.bat
+setup.sh
