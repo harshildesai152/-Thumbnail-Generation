@@ -20,20 +20,32 @@ export const useSocket = (userId?: string) => {
   useEffect(() => {
     if (!isClientReady || !userId) return;
 
+    // cleanup previous socket if exists
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+    }
+
     let socket: any = null;
 
     // Dynamically import socket.io-client to avoid SSR issues
     const initializeSocket = async () => {
       try {
+        // Double check if we already have a connection to avoid race conditions
+        if (socketRef.current && socketRef.current.connected) return;
+
         // @ts-ignore - Dynamic import for socket.io-client
-        const io = await socketioClient.default;
+        const io = await socketioClient.default || socketioClient;
 
         // Create socket connection
         socket = io(process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3005', {
           transports: ['websocket', 'polling'],
           forceNew: true,
-          timeout: 5000,
+          reconnection: true,
+          reconnectionAttempts: 5,
+          timeout: 10000,
         });
+
+        console.log('🔌 FRONTEND: Creating socket connection to:', process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3005');
 
         socketRef.current = socket;
 
@@ -43,8 +55,10 @@ export const useSocket = (userId?: string) => {
           setIsConnected(true);
 
           // Join user room
-          socket.emit('join-user', userId);
-          console.log(`👤 Joined user room: ${userId}`);
+          if (userId) {
+             socket.emit('join-user', userId);
+             console.log(`👤 Joined user room: ${userId}`);
+          }
         });
 
         // Handle disconnection
@@ -55,8 +69,22 @@ export const useSocket = (userId?: string) => {
 
         // Handle job updates
         socket.on('job-update', (update: JobUpdate) => {
-          console.log('📡 Job update received:', update);
-          setJobUpdates(prev => [...prev, update]);
+          console.log('📡 FRONTEND: Job update received:', update);
+          console.log('📡 FRONTEND: Current job updates array length:', jobUpdates.length);
+          setJobUpdates(prev => {
+            // Check if we already have this specific update (debounce)
+            const exists = prev.some(p =>
+              p.jobId === update.jobId &&
+              p.status === update.status &&
+              p.progress === update.progress
+            );
+            if (exists) {
+              console.log('📡 FRONTEND: Duplicate update detected, skipping');
+              return prev;
+            }
+            console.log('📡 FRONTEND: Adding new update to array');
+            return [...prev, update];
+          });
         });
 
         // Handle connection errors
@@ -69,6 +97,10 @@ export const useSocket = (userId?: string) => {
         socket.on('reconnect', (attemptNumber: number) => {
           console.log(`🔄 Reconnected to socket server (attempt ${attemptNumber})`);
           setIsConnected(true);
+          // Re-join room on reconnect
+          if (userId) {
+            socket.emit('join-user', userId);
+          }
         });
 
       } catch (error) {
@@ -81,9 +113,9 @@ export const useSocket = (userId?: string) => {
 
     // Cleanup function
     return () => {
-      if (socket) {
+      if (socketRef.current) {
         console.log('🧹 Cleaning up socket connection');
-        socket.disconnect();
+        socketRef.current.disconnect();
         socketRef.current = null;
         setIsConnected(false);
       }
@@ -103,7 +135,7 @@ export const useSocket = (userId?: string) => {
   };
 
   return {
-    socket: null, // Real socket would be returned here
+    socket: socketRef.current,
     isConnected,
     jobUpdates,
     clearJobUpdates,

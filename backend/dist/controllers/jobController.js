@@ -1,8 +1,23 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.JobController = void 0;
+const path_1 = __importDefault(require("path"));
 const Job_1 = require("../models/Job");
 class JobController {
+    static serializeJob(job, req) {
+        const jobObj = job.toObject();
+        if (jobObj.status === 'completed' && jobObj.thumbnailFilePath) {
+            // Extract filename from the path
+            const thumbnailFileName = path_1.default.basename(jobObj.thumbnailFilePath);
+            // Use relative URL - let the frontend proxy handle the domain
+            jobObj.thumbnailUrl = `/api/files/thumbnails/${thumbnailFileName}`;
+            console.log('Generated thumbnail URL:', jobObj.thumbnailUrl);
+        }
+        return jobObj;
+    }
     static async getUserJobs(req, res) {
         try {
             const userId = req.user.userId;
@@ -15,8 +30,10 @@ class JobController {
                 .limit(limit)
                 .select('-__v');
             const total = await Job_1.Job.countDocuments({ userId });
+            // Serialize jobs to include URL
+            const serializedJobs = jobs.map(job => JobController.serializeJob(job, req));
             res.json({
-                jobs,
+                jobs: serializedJobs,
                 pagination: {
                     page,
                     limit,
@@ -39,7 +56,7 @@ class JobController {
                 res.status(404).json({ error: 'Job not found' });
                 return;
             }
-            res.json({ job });
+            res.json({ job: JobController.serializeJob(job, req) });
         }
         catch (error) {
             console.error('Get job error:', error);

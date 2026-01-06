@@ -33,6 +33,25 @@ function formatTimeAgo(date: Date): string {
 export function JobCard({ job, onRetry, onDelete }: JobCardProps) {
   const FileIcon = job.fileType === 'video' ? Video : Image;
 
+  const handleDownload = async () => {
+    if (!job.thumbnailUrl) return;
+
+    try {
+      const response = await fetch(job.thumbnailUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = job.fileName;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Download failed:', error);
+    }
+  };
+
   return (
     <div className="rounded-xl border bg-card text-card-foreground shadow-sm animate-fade-in group hover:shadow-md transition-shadow">
       <div className="p-4">
@@ -154,14 +173,19 @@ export function JobCard({ job, onRetry, onDelete }: JobCardProps) {
                           <span>•</span>
                           <StatusBadge status={job.status} />
                         </div>
-                        <Button size="sm" className="gap-2">
+                        <Button size="sm" className="gap-2" onClick={handleDownload}>
                           <Download className="w-4 h-4" />
                           Download
                         </Button>
                       </div>
                     </DialogContent>
                   </Dialog>
-                  <Button variant="outline" size="sm" className="h-8 text-xs bg-background/50 backdrop-blur-sm">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-8 text-xs bg-background/50 backdrop-blur-sm"
+                    onClick={handleDownload}
+                  >
                     <Download className="w-3.5 h-3.5 mr-2" />
                     Download
                   </Button>

@@ -3,16 +3,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.redis = void 0;
+exports.redis = exports.redisConfig = void 0;
 const ioredis_1 = __importDefault(require("ioredis"));
-const redisConfig = {
+exports.redisConfig = {
     host: 'localhost',
     port: 6379,
     retryDelayOnFailover: 100,
     maxRetriesPerRequest: null, // Recommended by BullMQ
     lazyConnect: false, // Connect immediately
 };
-exports.redis = new ioredis_1.default(redisConfig);
+exports.redis = new ioredis_1.default(exports.redisConfig);
 exports.redis.on('error', (err) => {
     console.error('Redis Client Error:', err.message);
     if (process.env.NODE_ENV === 'development') {

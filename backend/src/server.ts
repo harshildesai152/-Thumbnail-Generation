@@ -9,7 +9,7 @@ import { connectDB } from './config/database';
 import redis from './config/redis';
 import { queueReady } from './config/queue';
 import { SocketService } from './services/socketService';
-import thumbnailWorker from './workers/thumbnailWorker';
+import { initThumbnailWorker } from './workers/thumbnailWorker';
 import authRoutes from './routes/auth';
 import uploadRoutes from './routes/upload';
 import jobRoutes from './routes/jobs';
@@ -80,13 +80,17 @@ async function startServer() {
     // Create HTTP server
     const server = createServer(app);
 
-    // Initialize Socket.IO
+    // Initialize Socket.IO FIRST
     const socketService = new SocketService(server);
+    console.log('📡 Socket.IO service initialized');
+
+    // Initialize Worker AFTER SocketService is ready
+    const thumbnailWorker = initThumbnailWorker();
 
     // Start server
     server.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
-      console.log('📡 Socket.IO initialized');
+      console.log('📡 Socket.IO initialized and listening');
       console.log('📋 API endpoints available at: http://localhost:' + PORT + '/api');
       console.log('🏥 Health check: http://localhost:' + PORT + '/api/health');
 

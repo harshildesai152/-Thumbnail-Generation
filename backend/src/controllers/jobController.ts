@@ -1,7 +1,22 @@
 import { Request, Response } from 'express';
+import path from 'path';
 import { Job } from '../models/Job';
 
 export class JobController {
+  private static serializeJob(job: any, req: Request) {
+    const jobObj = job.toObject();
+    
+    if (jobObj.status === 'completed' && jobObj.thumbnailFilePath) {
+      // Extract filename from the path
+      const thumbnailFileName = path.basename(jobObj.thumbnailFilePath);
+      // Use relative URL - let the frontend proxy handle the domain
+      jobObj.thumbnailUrl = `/api/files/thumbnails/${thumbnailFileName}`;
+      console.log('Generated thumbnail URL:', jobObj.thumbnailUrl);
+    }
+    
+    return jobObj;
+  }
+
   static async getUserJobs(req: Request, res: Response): Promise<void> {
     try {
       const userId = req.user!.userId;
@@ -17,8 +32,11 @@ export class JobController {
 
       const total = await Job.countDocuments({ userId });
 
+      // Serialize jobs to include URL
+      const serializedJobs = jobs.map(job => JobController.serializeJob(job, req));
+
       res.json({
-        jobs,
+        jobs: serializedJobs,
         pagination: {
           page,
           limit,
@@ -43,7 +61,7 @@ export class JobController {
         return;
       }
 
-      res.json({ job });
+      res.json({ job: JobController.serializeJob(job, req) });
     } catch (error) {
       console.error('Get job error:', error);
       res.status(500).json({ error: 'Failed to fetch job' });

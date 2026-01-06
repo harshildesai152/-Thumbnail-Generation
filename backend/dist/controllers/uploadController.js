@@ -65,12 +65,8 @@ class UploadController {
                         thumbnailFilePath,
                         fileType
                     });
-                    // Update job status to queued and emit socket event
+                    // Update job status to queued (socket emission will be handled by BullMQ events)
                     await Job_1.Job.findByIdAndUpdate(job._id, { status: 'queued' });
-                    const socketService = socketService_1.SocketService.getInstance();
-                    if (socketService) {
-                        socketService.emitJobUpdate(job._id.toString(), userId, 'queued', 0);
-                    }
                 }
                 else {
                     // Mark job as failed if queue is not available
@@ -87,7 +83,7 @@ class UploadController {
                 jobs.push({
                     id: job._id,
                     originalFileName: file.originalname,
-                    status: (0, queue_1.isQueueAvailable)() ? 'pending' : 'failed',
+                    status: (0, queue_1.isQueueAvailable)() ? 'queued' : 'failed',
                     progress: 0,
                     createdAt: job.createdAt,
                     error: (0, queue_1.isQueueAvailable)() ? undefined : 'Queue service unavailable'
