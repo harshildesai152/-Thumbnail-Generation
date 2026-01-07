@@ -201,6 +201,3 @@ Check the following log files:
 3. Write meaningful commit messages
 4. Test thoroughly before submitting
 
-## License
-
-This project is licensed under the ISC License.
